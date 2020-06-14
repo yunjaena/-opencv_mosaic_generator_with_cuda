@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29911.84
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "opencv", "opencv\opencv.vcxproj", "{F03E3DF4-5BD6-4D67-993F-93F59A5CEFE9}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		OpenCV|x64 = OpenCV|x64
+		OpenCV|x86 = OpenCV|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F03E3DF4-5BD6-4D67-993F-93F59A5CEFE9}.Debug|x64.ActiveCfg = Debug|x64
+		{F03E3DF4-5BD6-4D67-993F-93F59A5CEFE9}.Debug|x64.Build.0 = Debug|x64
+		{F03E3DF4-5BD6-4D67-993F-93F59A5CEFE9}.Debug|x86.ActiveCfg = Debug|Win32
+		{F03E3DF4-5BD6-4D67-993F-93F59A5CEFE9}.Debug|x86.Build.0 = Debug|Win32
+		{F03E3DF4-5BD6-4D67-993F-93F59A5CEFE9}.OpenCV|x64.ActiveCfg = OpenCV|x64
+		{F03E3DF4-5BD6-4D67-993F-93F59A5CEFE9}.OpenCV|x64.Build.0 = OpenCV|x64
+		{F03E3DF4-5BD6-4D67-993F-93F59A5CEFE9}.OpenCV|x86.ActiveCfg = OpenCV|Win32
+		{F03E3DF4-5BD6-4D67-993F-93F59A5CEFE9}.OpenCV|x86.Build.0 = OpenCV|Win32
+		{F03E3DF4-5BD6-4D67-993F-93F59A5CEFE9}.Release|x64.ActiveCfg = Release|x64
+		{F03E3DF4-5BD6-4D67-993F-93F59A5CEFE9}.Release|x64.Build.0 = Release|x64
+		{F03E3DF4-5BD6-4D67-993F-93F59A5CEFE9}.Release|x86.ActiveCfg = Release|Win32
+		{F03E3DF4-5BD6-4D67-993F-93F59A5CEFE9}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {06A03AAC-E9D7-4D98-99C9-30FA2F49B9B2}
+	EndGlobalSection
+EndGlobal
