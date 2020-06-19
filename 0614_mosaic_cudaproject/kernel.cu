@@ -326,10 +326,10 @@ int main()
     imshow("openmp", result_openmp);
 
     namedWindow("CUDA-normal", WINDOW_NORMAL);
-    imshow("CUDA-normal", file3);
+    imshow("CUDA-normal", file4);
 
     namedWindow("CUDA-shared memory", WINDOW_NORMAL);
-    imshow("CUDA-shared memory", file4);
+    imshow("CUDA-shared memory", file3);
 
 
     timer.printTimer();
