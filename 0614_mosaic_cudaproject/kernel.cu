@@ -19,11 +19,14 @@
 using namespace cv;
 using namespace std;
 
-__global__ void mosaic_cuda(unsigned char* in, unsigned char* out, int mon, int height, int width) {
+#define mosaic 50
+#define BLOCK_SIZE 16
+#define BLOCK_SIZE_X 32
+#define BLOCK_SIZE_Y 16
 
 
+__global__ void mosaic_cuda_improved(unsigned char* in, unsigned char* out, int mon, int height, int width) {
 
-    // cv::cuda::GpuMat image(*img);
     int ix = blockDim.x * blockIdx.x + threadIdx.x;
     int iy = blockDim.y * blockIdx.y + threadIdx.y;
 
@@ -34,124 +37,81 @@ __global__ void mosaic_cuda(unsigned char* in, unsigned char* out, int mon, int 
 
         return;
     }
-    int R, G, B;
 
-    //R = in[idx * 3 + 0];
-    //G = in[idx * 3 + 1];
-    //B = in[idx * 3 + 2];
+    int R=0, G=0, B=0;
+    int idx;
 
-
-    int nCount;
+    
     int monWidth = mon, monHeight = mon;
 
 
-
-    nCount = 0;
-    B = 0; G = 0; R = 0;
-
-    if ((ix + mon) > height)
-        monHeight = height % mon;
-    else
-        monHeight = mon;
-
-    if ((iy + mon) > width)
-        monWidth = width % mon;
-    else
-        monWidth = mon;
+    monHeight = (ix + mon > height) * (height % mon) + (ix + mon <= height) * mon;
+    monWidth = (iy + mon > width) * (width % mon) + (iy + mon <= width) * mon;
+    int nCount = monHeight * monWidth;
 
     for (int n = 0; n < monHeight; n++) {
         for (int m = 0; m < monWidth; m++) {
-            int idx = (ix + n) * width + (iy + m);
-            B += in[idx * 3 + 0];
-            G += in[idx * 3 + 1];
-            R += in[idx * 3 + 2];
-            //nCount++;
+            idx = ((ix + n) * width + (iy + m)) * 3;
+            B += in[idx + 0];
+            G += in[idx + 1];
+            R += in[idx + 2];
         }
     }
-
-    nCount = monHeight * monWidth;
-    //∆Ú±’¿ª±∏«‘
 
     B /= nCount;
     G /= nCount;
     R /= nCount;
 
-    //B = 125;
-    //G = 125;
-    //R = 125;
-
-
     for (int n = 0; n < monHeight; n++) {
         for (int m = 0; m < monWidth; m++) {
-            int idx = (ix + n) * width + (iy + m);
+            idx = ((ix + n) * width + (iy + m)) * 3;
 
-            out[idx * 3 + 0] = B;
-            out[idx * 3 + 1] = G;
-            out[idx * 3 + 2] = R;
+            out[idx + 0] = B;
+            out[idx + 1] = G;
+            out[idx + 2] = R;
+
         }
     }
-
 }
 
-__global__ void mosaic_cuda_sm(unsigned char* in, unsigned char* out, int mon, int height, int width) {
 
+__global__ void mosaic_cuda(unsigned char* in, unsigned char* out, int mon, int height, int width) {
 
+    int ix = (blockDim.x * blockIdx.x + threadIdx.x) * mosaic;
+    int iy = (blockDim.y * blockIdx.y + threadIdx.y) * mosaic;
 
-    int ix = blockDim.x * blockIdx.x + threadIdx.x;
-    int iy = blockDim.y * blockIdx.y + threadIdx.y;
+    if (ix >= height || iy >= width) { return;}
 
+    int C[16] = { 0 };
+    int monWidth, monHeight;
+    int idx;
 
-    if (ix % mon != 0 || iy % mon != 0) return;
+    monHeight = (ix + mon > height) * (height % mon) + (ix + mon <= height) * mon;
 
-    if (ix >= height || iy >= width) {
-
-        return;
-    }
-    __shared__ int R;
-    __shared__ int G;
-    __shared__ int B;
-
-    int nCount;
-    int monWidth = mon, monHeight = mon;
-
-
-
-    nCount = 0;
-    B = 0; G = 0; R = 0;
-    __syncthreads();
-
-    if ((ix + mon) > height)
-        monHeight = height % mon;
-    else
-        monHeight = mon;
-
-    if ((iy + mon) > width)
-        monWidth = width % mon;
-    else
-        monWidth = mon;
+    monWidth = (iy + mon > width) * (width % mon) + (iy + mon <= width) * mon;
+    int nCount = monHeight * monWidth;;
 
     for (int n = 0; n < monHeight; n++) {
         for (int m = 0; m < monWidth; m++) {
-            int idx = (ix + n) * width + (iy + m);
-            B += in[idx * 3 + 0];
-            G += in[idx * 3 + 1];
-            R += in[idx * 3 + 2];
+            idx = ((ix + n) * width + (iy + m))*3;
+            C[0] = C[0] + in[idx + 0];
+            C[4] = C[4] + in[idx + 1];
+            C[8] = C[8] + in[idx + 2];
         }
     }
+    
 
-    nCount = monHeight * monWidth;
+    C[0] /= nCount;
+    C[4] /= nCount;
+    C[8] /= nCount;
 
-    B /= nCount;
-    G /= nCount;
-    R /= nCount;
 
-    for (int n = 0; n < monHeight; n++) {
+    for (int n = 0; n  < monHeight; n++) {
         for (int m = 0; m < monWidth; m++) {
-            int idx = (ix + n) * width + (iy + m);
-
-            out[idx * 3 + 0] = B;
-            out[idx * 3 + 1] = G;
-            out[idx * 3 + 2] = R;
+           idx = ((ix + n) * width + (iy + m)) * 3;
+           out[idx + 0] = C[0];
+           out[idx + 1] = C[4];
+           out[idx + 2] = C[8];
         }
     }
 
@@ -210,7 +170,9 @@ void mosaic_serial(const Mat* image, Mat* dst, int mon)
 void mosaic_openmp(const Mat* image, Mat* dst, int mon)
 {
     const int NUM_THREADS = 6;
+
     for (int i = 0; i < image->size().height; i += mon) {
+
 #pragma omp parallel for num_threads(NUM_THREADS)
         for (int j = 0; j < image->size().width; j += mon) {
             int B = 0, G = 0, R = 0;
@@ -234,7 +196,6 @@ void mosaic_openmp(const Mat* image, Mat* dst, int mon)
                 }
             }
 
-            //∆Ú±’¿ª±∏«‘
             int nCount = monHeight * monWidth;
             B /= nCount;
             G /= nCount;
@@ -251,7 +212,7 @@ void mosaic_openmp(const Mat* image, Mat* dst, int mon)
     }
 }
 
-#define mosaic 40
+
 
 int main()
 {
@@ -260,11 +221,11 @@ int main()
     string fileName;
     Mat original_image, result_serial, result_openmp;
     Mat* original_image_cuda;
-    DS_timer timer(4);
+    DS_timer timer(6);
     timer.setTimerName(0, (char*)"Serial");
     timer.setTimerName(1, (char*)"Openmp");
     timer.setTimerName(2, (char*)"CUDA-normal");
-    timer.setTimerName(3, (char*)"CUDA-shared memory");
+    timer.setTimerName(3, (char*)"CUDA-Improved");
 
 
 
@@ -279,9 +240,10 @@ int main()
     }
 
     unsigned char* input = (unsigned char*)(original_image.data);
-    unsigned char* dev_input, * dev_output;
+    unsigned char* dev_input,* dev_input_ip, * dev_output, * dev_output_ip;
     unsigned char* output = (unsigned char*)malloc(original_image.cols * original_image.rows * 3 * sizeof(char));
-    unsigned char* output_sm = (unsigned char*)malloc(original_image.cols * original_image.rows * 3 * sizeof(char));
+    unsigned char* output_ip = (unsigned char*)malloc(original_image.cols * original_image.rows * 3 * sizeof(char));
+    
 
 
 
@@ -308,45 +270,50 @@ int main()
 
     int size = original_image.size().height * original_image.size().width;
 
-    dim3 dimBlock(32, 16);
+    int size2 = original_image.cols * original_image.rows * 3 * sizeof(char);
+
+
+    cudaMalloc((void**)&dev_input, original_image.cols * original_image.rows * 3 * sizeof(char));
+    cudaMalloc((void**)&dev_input_ip, original_image.cols * original_image.rows * 3 * sizeof(char));
+    cudaMalloc((void**)&dev_output, original_image.cols * original_image.rows * 3 * sizeof(char));
+    cudaMalloc((void**)&dev_output_ip, original_image.cols * original_image.rows * 3 * sizeof(char));
+
+    
+    dim3 dimBlock(BLOCK_SIZE_X, BLOCK_SIZE_Y);
     dim3 dimGrid(ceil((float)imgh / dimBlock.x), ceil((float)imgw / dimBlock.y), 1);
 
-
-
-
-
-    timer.onTimer(2);
-    cudaMalloc((void**)&dev_input, original_image.cols * original_image.rows * 3 * sizeof(char));
-    cudaMalloc((void**)&dev_output, original_image.cols * original_image.rows * 3 * sizeof(char));
-    cudaMemcpy(dev_input, input, original_image.cols * original_image.rows * 3 * sizeof(char), cudaMemcpyHostToDevice);
+    timer.onTimer(3);
+    cudaMemcpy(dev_input, input, size2, cudaMemcpyHostToDevice);
     
-    mosaic_cuda << <dimGrid, dimBlock >> > (dev_input, dev_output, mosaic, imgh, imgw);
+    
+    mosaic_cuda_improved << <dimGrid, dimBlock >> > (dev_input, dev_output, mosaic, imgh, imgw);
     cudaDeviceSynchronize();
     
-    cudaMemcpy(output, dev_output, original_image.cols * original_image.rows * 3 * sizeof(char), cudaMemcpyDeviceToHost);
-    timer.offTimer(2);
 
-
-
+    cudaMemcpy(output, dev_output, size2, cudaMemcpyDeviceToHost);
+    timer.offTimer(3);
 
     Mat file3 = Mat(original_image.rows, original_image.cols, original_image.type(), output);
 
     //------------------------------
 
+    dim3 dimBlock_ip(BLOCK_SIZE_X, BLOCK_SIZE_Y);
+    dim3 dimGrid_ip(ceil(((float)imgh / dimBlock.x)/mosaic), ceil(((float)imgw / dimBlock.y)/mosaic), 1);
 
-    timer.onTimer(3);
-    cudaMalloc((void**)&dev_input, original_image.cols * original_image.rows * 3 * sizeof(char));
-    cudaMalloc((void**)&dev_output, original_image.cols * original_image.rows * 3 * sizeof(char));
-    cudaMemcpy(dev_input, input, original_image.cols * original_image.rows * 3 * sizeof(char), cudaMemcpyHostToDevice);
-   
-    mosaic_cuda_sm << <dimGrid, dimBlock >> > (dev_input, dev_output, mosaic, imgh, imgw);
+    timer.onTimer(2);
+    cudaMemcpy(dev_input_ip, input, size2, cudaMemcpyHostToDevice);
+    
+    
+    mosaic_cuda << <dimGrid_ip, dimBlock_ip >> > (dev_input_ip, dev_output_ip, mosaic, imgh, imgw);
     cudaDeviceSynchronize();
     
-    cudaMemcpy(output_sm, dev_output, original_image.cols * original_image.rows * 3 * sizeof(char), cudaMemcpyDeviceToHost);
-    timer.offTimer(3);
+
+    cudaMemcpy(output_ip, dev_output_ip, size2, cudaMemcpyDeviceToHost);
+    timer.offTimer(2);
+
+    Mat file4 = Mat(original_image.rows, original_image.cols, original_image.type(), output_ip);
 
 
-    Mat file4 = Mat(original_image.rows, original_image.cols, original_image.type(), output_sm);
 
 
 

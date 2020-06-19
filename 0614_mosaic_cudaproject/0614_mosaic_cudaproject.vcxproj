@@ -86,7 +86,7 @@
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
       <CodeGeneration>compute_60,sm_60</CodeGeneration>
-      <AdditionalCompilerOptions>-openMP</AdditionalCompilerOptions>
+      <AdditionalCompilerOptions>/openmp</AdditionalCompilerOptions>
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='OpenCV|x64'">
