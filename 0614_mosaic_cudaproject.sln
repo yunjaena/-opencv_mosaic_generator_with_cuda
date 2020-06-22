@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29911.84
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "0614_mosaic_cudaproject", "0614_mosaic_cudaproject\0614_mosaic_cudaproject.vcxproj", "{1ABA5EF1-4151-4881-8BFC-0D605601697B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		OpenCV|x64 = OpenCV|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1ABA5EF1-4151-4881-8BFC-0D605601697B}.Debug|x64.ActiveCfg = Debug|x64
+		{1ABA5EF1-4151-4881-8BFC-0D605601697B}.Debug|x64.Build.0 = Debug|x64
+		{1ABA5EF1-4151-4881-8BFC-0D605601697B}.OpenCV|x64.ActiveCfg = OpenCV|x64
+		{1ABA5EF1-4151-4881-8BFC-0D605601697B}.OpenCV|x64.Build.0 = OpenCV|x64
+		{1ABA5EF1-4151-4881-8BFC-0D605601697B}.Release|x64.ActiveCfg = Release|x64
+		{1ABA5EF1-4151-4881-8BFC-0D605601697B}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {07EC2F71-04B0-4083-8E1E-8E8906892882}
+	EndGlobalSection
+EndGlobal
